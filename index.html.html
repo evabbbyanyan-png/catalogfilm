@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REEL — Katalog Film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0e12;
+    --surface:#171a20;
+    --surface-2:#1f232b;
+    --gold:#d4af37;
+    --gold-dim:#8a7226;
+    --crimson:#a32638;
+    --text:#ede9e0;
+    --text-dim:#9098a3;
+    --line:#2a2e37;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.display{
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:0.04em;
+    font-weight:400;
+  }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ===== sprocket strip signature ===== */
+  .sprocket{
+    height:14px;
+    background-image: radial-gradient(circle, var(--bg) 3.5px, transparent 3.6px);
+    background-size: 22px 14px;
+    background-position: 10px center;
+    background-color: var(--gold-dim);
+  }
+  .sprocket.bottom{ background-color: var(--crimson); opacity:0.9; }
+
+  /* ===================== GATE (Register/Login) ===================== */
+  #gate{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(ellipse at top, rgba(212,175,55,0.08), transparent 60%),
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 60px),
+      var(--bg);
+    padding:24px;
+  }
+  .ticket{
+    width:100%;
+    max-width:420px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    position:relative;
+  }
+  .ticket-tear{
+    height:0;
+    border-top:2px dashed var(--line);
+    position:relative;
+    margin:0 28px;
+  }
+  .ticket-tear::before, .ticket-tear::after{
+    content:"";
+    position:absolute;
+    top:-11px;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:var(--bg);
+  }
+  .ticket-tear::before{ left:-38px; }
+  .ticket-tear::after{ right:-38px; }
+  .ticket-head{
+    padding:32px 32px 20px;
+    text-align:center;
+  }
+  .ticket-head .eyebrow{
+    color:var(--gold);
+    font-size:12px;
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .ticket-head h1{ font-size:44px; color:var(--text); margin-top:6px; }
+  .ticket-head p{ color:var(--text-dim); font-size:13px; margin-top:6px; }
+  .ticket-body{ padding:28px 32px 32px; }
+  .tabs{ display:flex; gap:2px; margin-bottom:22px; background:var(--surface-2); border-radius:6px; padding:3px; }
+  .tab-btn{
+    flex:1; padding:9px 0; text-align:center; background:transparent; border:none;
+    color:var(--text-dim); font-family:'Inter',sans-serif; font-weight:600; font-size:13px;
+    cursor:pointer; border-radius:4px; transition:0.2s;
+  }
+  .tab-btn.active{ background:var(--gold); color:#0c0e12; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:7px; font-family:'JetBrains Mono',monospace;}
+  .field input{
+    width:100%; background:var(--surface-2); border:1px solid var(--line); color:var(--text);
+    padding:11px 13px; border-radius:5px; font-size:14px; font-family:'Inter',sans-serif;
+    outline:none; transition:0.2s;
+  }
+  .field input:focus{ border-color:var(--gold); }
+  .btn-gold{
+    width:100%; padding:13px; background:var(--gold); color:#0c0e12; border:none; border-radius:5px;
+    font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.06em; cursor:pointer; margin-top:6px;
+    transition:0.15s;
+  }
+  .btn-gold:hover{ background:#e6c250; }
+  .gate-note{
+    font-size:11px; color:var(--text-dim); text-align:center; margin-top:14px; line-height:1.6;
+  }
+  .error-msg{ color:var(--crimson); font-size:12px; margin-top:-8px; margin-bottom:12px; display:none; }
+
+  /* ===================== APP SHELL ===================== */
+  #app{ display:none; min-height:100vh; }
+  header.topbar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(12,14,18,0.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{
+    max-width:1200px; margin:0 auto; padding:16px 24px;
+    display:flex; align-items:center; justify-content:space-between; gap:20px;
+  }
+  .logo{ font-size:26px; color:var(--gold); display:flex; align-items:center; gap:8px; }
+  .logo span{ color:var(--text); }
+  .search-wrap{ flex:1; max-width:420px; }
+  .search-wrap input{
+    width:100%; background:var(--surface); border:1px solid var(--line); color:var(--text);
+    padding:10px 14px; border-radius:20px; font-size:13px; outline:none;
+  }
+  .search-wrap input:focus{ border-color:var(--gold); }
+
+  .menu-wrap{ position:relative; }
+  .hamburger{
+    width:42px; height:42px; background:var(--surface); border:1px solid var(--line); border-radius:6px;
+    cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  }
+  .hamburger span{ width:20px; height:2px; background:var(--gold); display:block; }
+  .dropdown{
+    position:absolute; top:52px; right:0; width:230px; background:var(--surface);
+    border:1px solid var(--line); border-radius:8px; overflow:hidden;
+    box-shadow:0 12px 30px rgba(0,0,0,0.5);
+    display:none; flex-direction:column;
+    z-index:60;
+  }
+  .dropdown.open{ display:flex; }
+  .dropdown .user-chip{
+    padding:14px 16px; border-bottom:1px solid var(--line); font-size:12px; color:var(--text-dim);
+  }
+  .dropdown .user-chip b{ color:var(--text); display:block; font-size:14px; margin-bottom:2px;}
+  .dropdown button{
+    background:none; border:none; text-align:left; padding:12px 16px; color:var(--text);
+    font-size:13.5px; cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line);
+    font-family:'Inter',sans-serif;
+  }
+  .dropdown button:last-child{ border-bottom:none; }
+  .dropdown button:hover{ background:var(--surface-2); color:var(--gold); }
+
+  .filter-row{
+    max-width:1200px; margin:0 auto; padding:18px 24px 0; display:flex; gap:8px; flex-wrap:wrap;
+  }
+  .chip{
+    padding:7px 15px; border-radius:20px; border:1px solid var(--line); background:var(--surface);
+    color:var(--text-dim); font-size:12.5px; cursor:pointer; font-family:'JetBrains Mono',monospace;
+  }
+  .chip.active{ background:var(--gold); color:#0c0e12; border-color:var(--gold); font-weight:600; }
+
+  /* ===================== HERO ===================== */
+  .hero{
+    max-width:1200px; margin:22px auto 0; padding:0 24px;
+  }
+  .hero-card{
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    background:linear-gradient(120deg, #2a1418, #171a20 55%);
+    padding:38px 34px; position:relative;
+  }
+  .hero-card .eyebrow{ color:var(--gold); font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.2em; }
+  .hero-card h2{ font-size:40px; margin-top:8px; max-width:560px; }
+  .hero-card p{ color:var(--text-dim); max-width:520px; margin-top:10px; font-size:14px; line-height:1.6; }
+
+  /* ===================== GRID ===================== */
+  .grid{
+    max-width:1200px; margin:0 auto; padding:26px 24px 60px;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:20px;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; overflow:hidden;
+    cursor:pointer; transition:0.2s; display:flex; flex-direction:column;
+  }
+  .card:hover{ transform:translateY(-3px); border-color:var(--gold); }
+  .poster{
+    aspect-ratio:2/3; position:relative; display:flex; align-items:flex-end; padding:12px;
+  }
+  .poster .genre-tag{
+    background:rgba(12,14,18,0.65); color:var(--gold); font-size:10px; padding:4px 8px; border-radius:4px;
+    font-family:'JetBrains Mono',monospace; letter-spacing:0.05em;
+  }
+  .poster .p-title{ color:rgba(255,255,255,0.9); font-family:'Bebas Neue',sans-serif; font-size:20px; line-height:1.05; }
+  .card-body{ padding:12px 14px 14px; }
+  .card-meta{ display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--text-dim); margin-top:6px;}
+  .stars{ color:var(--gold); font-size:12.5px; }
+  .views{ display:flex; align-items:center; gap:4px; font-family:'JetBrains Mono',monospace; }
+
+  /* ===================== MODAL ===================== */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(6,7,9,0.82); display:none; align-items:center; justify-content:center;
+    z-index:100; padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    width:100%; max-width:640px; max-height:88vh; overflow-y:auto; background:var(--surface);
+    border:1px solid var(--line); border-radius:10px;
+  }
+  .modal-hero{ padding:26px 28px 18px; position:relative; }
+  .modal-hero .close-btn{
+    position:absolute; top:16px; right:16px; width:32px; height:32px; border-radius:50%;
+    background:var(--surface-2); border:1px solid var(--line); color:var(--text); cursor:pointer; font-size:16px;
+  }
+  .modal-hero h2{ font-size:32px; }
+  .modal-hero .meta-line{ color:var(--text-dim); font-size:12.5px; margin-top:6px; font-family:'JetBrains Mono',monospace; }
+  .modal-hero .synopsis{ margin-top:14px; font-size:13.5px; line-height:1.7; color:var(--text); }
+  .modal-section{ padding:18px 28px; border-top:1px solid var(--line); }
+  .modal-section h3{ font-size:16px; color:var(--gold); margin-bottom:12px; letter-spacing:0.03em; }
+  .rate-row{ display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+  .star-input span{ cursor:pointer; font-size:20px; color:var(--line); }
+  .star-input span.on{ color:var(--gold); }
+  .comment-box textarea{
+    width:100%; background:var(--surface-2); border:1px solid var(--line); color:var(--text);
+    padding:10px 12px; border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; resize:vertical; min-height:60px; outline:none;
+  }
+  .comment-box textarea:focus{ border-color:var(--gold); }
+  .comment-box button{
+    margin-top:8px; padding:9px 18px; background:var(--gold); color:#0c0e12; border:none; border-radius:5px;
+    font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:0.05em; cursor:pointer;
+  }
+  .comment-item{ padding:12px 0; border-bottom:1px solid var(--line); }
+  .comment-item:last-child{ border-bottom:none; }
+  .comment-item .c-head{ display:flex; justify-content:space-between; font-size:12.5px; }
+  .comment-item .c-name{ color:var(--gold); font-weight:600; }
+  .comment-item .c-stars{ color:var(--gold); }
+  .comment-item p{ font-size:13px; color:var(--text-dim); margin-top:5px; line-height:1.5; }
+
+  footer{ text-align:center; padding:24px; color:var(--text-dim); font-size:11.5px; }
+
+  @media (max-width:640px){
+    .search-wrap{ display:none; }
+    .hero-card h2{ font-size:30px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== GATE: REGISTER / LOGIN ===================== -->
+<div id="gate">
+  <div class="ticket">
+    <div class="ticket-head">
+      <div class="eyebrow">Admit One</div>
+      <h1>REEL</h1>
+      <p>Masuk dulu sebelum lampu bioskop redup.</p>
+    </div>
+    <div class="ticket-tear"></div>
+    <div class="ticket-body">
+      <div class="tabs">
+        <button class="tab-btn active" id="tabRegister" onclick="switchTab('register')">Daftar</button>
+        <button class="tab-btn" id="tabLogin" onclick="switchTab('login')">Masuk</button>
+      </div>
+
+      <form id="formRegister" onsubmit="return doRegister(event)">
+        <div class="field">
+          <label>Nickname</label>
+          <input type="text" id="regNick" placeholder="cth. sinefil_98" required>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="nama@email.com" required>
+        </div>
+        <div class="field">
+          <label>Kata Sandi</label>
+          <input type="password" id="regPass" placeholder="Minimal 6 karakter" minlength="6" required>
+        </div>
+        <div class="error-msg" id="regError">Lengkapi semua kolom dengan benar.</div>
+        <button type="submit" class="btn-gold">Buat Akun & Masuk</button>
+      </form>
+
+      <form id="formLogin" onsubmit="return doLogin(event)" style="display:none;">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="logEmail" placeholder="nama@email.com" required>
+        </div>
+        <div class="field">
+          <label>Kata Sandi</label>
+          <input type="password" id="logPass" placeholder="Kata sandi" required>
+        </div>
+        <div class="error-msg" id="logError">Email atau kata sandi belum terdaftar di sesi ini.</div>
+        <button type="submit" class="btn-gold">Masuk</button>
+      </form>
+
+      <p class="gate-note">Ini adalah demo front-end lokal. Data akun hanya tersimpan sementara di browser selama sesi ini, tidak dikirim ke server mana pun, dan bukan login Gmail sungguhan.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MAIN APP ===================== -->
+<div id="app">
+  <div class="sprocket"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="logo">▶ <span>REEL</span></div>
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Cari judul film..." oninput="renderGrid()">
+      </div>
+      <div class="menu-wrap">
+        <button class="hamburger" onclick="toggleMenu()" aria-label="Menu"><span></span><span></span><span></span></button>
+        <div class="dropdown" id="dropdown">
+          <div class="user-chip"><b id="userNickDisplay">Tamu</b><span id="userEmailDisplay"></span></div>
+          <button onclick="alert('Pengaturan: fitur demo, belum terhubung ke sistem apa pun.')">⚙ Pengaturan</button>
+          <button onclick="alert('Akun: '+currentUser.nick+' — '+currentUser.email)">👤 Akun</button>
+          <button onclick="scrollToSection('grid-section')">🎬 Pilihan Film</button>
+          <button onclick="toggleCategoryPanel()">🗂 Kategori Film</button>
+          <button onclick="scrollToSection('grid-section')">⭐ Rate & Komentar Film</button>
+          <button onclick="doLogout()">↩ Keluar</button>
+        </div>
+      </div>
+    </div>
+    <div class="filter-row" id="categoryPanel" style="display:none;"></div>
+  </header>
+  <div class="sprocket bottom"></div>
+
+  <section class="hero">
+    <div class="hero-card">
+      <div class="eyebrow">Now Showing</div>
+      <h2>20 Film. Satu Layar. Nyalakan Popcorn-mu.</h2>
+      <p>Jelajahi katalog, beri rating, dan tinggalkan komentarmu di setiap film. Klik kartu film untuk melihat detail lengkap.</p>
+    </div>
+  </section>
+
+  <section id="grid-section" class="grid" id="movieGrid"></section>
+
+  <footer>REEL — demo katalog film, dibuat untuk keperluan latihan front-end.</footer>
+</div>
+
+<!-- ===================== MODAL DETAIL FILM ===================== -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+/* ============ DATA AKUN (demo, disimpan di memori JS saja) ============ */
+let currentUser = null;
+const sessionAccounts = {};
+
+function switchTab(tab){
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('formRegister').style.display = tab==='register' ? 'block':'none';
+  document.getElementById('formLogin').style.display = tab==='login' ? 'block':'none';
+}
+
+function doRegister(e){
+  e.preventDefault();
+  const nick = document.getElementById('regNick').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const err = document.getElementById('regError');
+  if(!nick || !email || pass.length < 6){
+    err.style.display='block'; return false;
+  }
+  err.style.display='none';
+  sessionAccounts[email] = { nick, email, pass };
+  currentUser = sessionAccounts[email];
+  enterApp();
+  return false;
+}
+
+function doLogin(e){
+  e.preventDefault();
+  const email = document.getElementById('logEmail').value.trim();
+  const pass = document.getElementById('logPass').value;
+  const err = document.getElementById('logError');
+  const acc = sessionAccounts[email];
+  if(!acc || acc.pass !== pass){
+    err.style.display='block'; return false;
+  }
+  err.style.display='none';
+  currentUser = acc;
+  enterApp();
+  return false;
+}
+
+function doLogout(){
+  currentUser = null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('gate').style.display='flex';
+  document.getElementById('dropdown').classList.remove('open');
+}
+
+function enterApp(){
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('userNickDisplay').textContent = currentUser.nick;
+  document.getElementById('userEmailDisplay').textContent = currentUser.email;
+  renderCategoryPanel();
+  renderGrid();
+}
+
+function toggleMenu(){
+  document.getElementById('dropdown').classList.toggle('open');
+}
+document.addEventListener('click', function(e){
+  const wrap = document.querySelector('.menu-wrap');
+  if(wrap && !wrap.contains(e.target)) document.getElementById('dropdown').classList.remove('open');
+});
+
+function scrollToSection(){
+  document.getElementById('grid-section').scrollIntoView({behavior:'smooth'});
+  document.getElementById('dropdown').classList.remove('open');
+}
+
+function toggleCategoryPanel(){
+  const p = document.getElementById('categoryPanel');
+  p.style.display = p.style.display==='none' ? 'flex' : 'none';
+  document.getElementById('dropdown').classList.remove('open');
+}
+
+/* ============ DATA FILM ============ */
+const genreColors = {
+  "Aksi": "linear-gradient(160deg,#5a1a1a,#1c1010)",
+  "Drama": "linear-gradient(160deg,#2c2440,#141420)",
+  "Horor": "linear-gradient(160deg,#1a2418,#0e1410)",
+  "Sci-Fi": "linear-gradient(160deg,#123044,#0c1620)",
+  "Komedi": "linear-gradient(160deg,#4a3a10,#201808)",
+  "Romansa": "linear-gradient(160deg,#4a1830,#1c0e16)",
+  "Thriller": "linear-gradient(160deg,#222226,#0e0e10)",
+  "Animasi": "linear-gradient(160deg,#164a3a,#0c1e18)"
+};
+
+let movies = [
+  {t:"Bayangan Kota Tua",g:"Thriller",y:2023,d:"118 mnt",syn:"Seorang detektif menyusuri lorong-lorong kota tua untuk mengungkap jaringan konspirasi yang melibatkan orang-orang terdekatnya.",views:15234,ratings:[4,5,4],comments:[{n:"Rani",r:5,c:"Alurnya bikin nagih sampai akhir."}]},
+  {t:"Langit yang Runtuh",g:"Drama",y:2022,d:"132 mnt",syn:"Kisah sebuah keluarga yang berjuang mempertahankan rumah dan hubungan mereka setelah bencana besar melanda kota kecil mereka.",views:9820,ratings:[5,5,4,5],comments:[{n:"Doni",r:5,c:"Emosional, aktingnya kuat sekali."}]},
+  {t:"Protokol Nebula",g:"Sci-Fi",y:2024,d:"140 mnt",syn:"Kru pesawat luar angkasa menemukan sinyal misterius yang mengancam membongkar rahasia terbesar umat manusia.",views:22110,ratings:[4,4,5],comments:[{n:"Ayu",r:4,c:"Visualnya megah, worth it ditonton di layar besar."}]},
+  {t:"Rumah di Ujung Lorong",g:"Horor",y:2023,d:"101 mnt",syn:"Sebuah keluarga baru pindah ke rumah tua dan mulai mengalami kejadian aneh yang mengungkap sejarah kelam penghuni sebelumnya.",views:18040,ratings:[3,4,4],comments:[{n:"Bagas",r:4,c:"Jump scare-nya pas, nggak berlebihan."}]},
+  {t:"Resep Cinta Ibu",g:"Romansa",y:2021,d:"110 mnt",syn:"Seorang chef muda kembali ke kampung halaman dan menemukan cinta lama sambil belajar resep rahasia keluarga.",views:7650,ratings:[5,4,5,5],comments:[{n:"Sari",r:5,c:"Manis dan hangat, cocok ditonton bareng keluarga."}]},
+  {t:"Tawa di Ujung Senja",g:"Komedi",y:2022,d:"98 mnt",syn:"Tiga sahabat lama reuni dalam perjalanan konyol lintas pulau demi memenuhi janji masa kecil yang absurd.",views:13200,ratings:[4,3,4],comments:[{n:"Fajar",r:4,c:"Lucu banget, banyak momen ngakak."}]},
+  {t:"Garis Depan",g:"Aksi",y:2024,d:"125 mnt",syn:"Seorang mantan tentara ditarik kembali ke medan konflik untuk menyelamatkan tim yang terjebak di wilayah musuh.",views:26800,ratings:[5,5,4],comments:[{n:"Rizki",r:5,c:"Adegan aksinya intens dari awal sampai akhir."}]},
+  {t:"Petualangan Si Kancil Kecil",g:"Animasi",y:2023,d:"92 mnt",syn:"Kancil kecil dan teman-teman hutannya memulai petualangan untuk menyelamatkan sungai yang mengering.",views:31450,ratings:[5,5,5,4],comments:[{n:"Nadia",r:5,c:"Anak-anak saya suka banget, warnanya cerah."}]},
+  {t:"Detak di Rumah Sakit Tua",g:"Horor",y:2021,d:"105 mnt",syn:"Seorang perawat malam menemukan bahwa rumah sakit tempatnya bekerja menyimpan rahasia mengerikan dari masa lalu.",views:10980,ratings:[3,4,3],comments:[{n:"Tio",r:3,c:"Suasananya creepy, tapi endingnya agak terburu-buru."}]},
+  {t:"Surat untuk Bulan",g:"Drama",y:2020,d:"128 mnt",syn:"Seorang ayah menulis surat setiap malam untuk putrinya yang koma, berharap kata-katanya bisa membawanya kembali.",views:14500,ratings:[5,5,5],comments:[{n:"Melati",r:5,c:"Nangis dari tengah sampai selesai."}]},
+  {t:"Kode Merah Jakarta",g:"Aksi",y:2023,d:"115 mnt",syn:"Tim khusus kepolisian berpacu dengan waktu untuk menggagalkan rencana peledakan di jantung kota Jakarta.",views:19870,ratings:[4,4,4,5],comments:[{n:"Eko",r:4,c:"Rapi banget koreografi laganya."}]},
+  {t:"Pelangi di Musim Kemarau",g:"Romansa",y:2022,d:"107 mnt",syn:"Dua orang asing bertemu di stasiun kereta dan menjalin kisah cinta singkat namun tak terlupakan sepanjang musim kemarau.",views:8420,ratings:[4,5,4],comments:[{n:"Wulan",r:5,c:"Dialognya puitis, soundtrack-nya juara."}]},
+  {t:"Warung Kopi Pak Tarno",g:"Komedi",y:2021,d:"95 mnt",syn:"Kehidupan sehari-hari di warung kopi pinggir jalan berubah kacau saat seorang investor kota datang menawarkan kerja sama aneh.",views:11230,ratings:[4,3,4],comments:[{n:"Yoga",r:4,c:"Karakter-karakternya related banget sama kehidupan sehari-hari."}]},
+  {t:"Orbit Terakhir",g:"Sci-Fi",y:2024,d:"136 mnt",syn:"Ilmuwan yang terjebak di stasiun luar angkasa yang rusak harus memilih antara menyelamatkan diri atau seluruh kru.",views:24560,ratings:[5,4,5],comments:[{n:"Dimas",r:5,c:"Ketegangannya konsisten, scoring musiknya top."}]},
+  {t:"Malam Tanpa Bulan",g:"Thriller",y:2020,d:"112 mnt",syn:"Seorang jurnalis investigasi diburu oleh organisasi rahasia setelah menemukan bukti korupsi skala besar.",views:16700,ratings:[4,4,3],comments:[{n:"Putri",r:4,c:"Plot twist di akhir nggak ketebak."}]},
+  {t:"Perjanjian Terakhir",g:"Drama",y:2023,d:"120 mnt",syn:"Dua saudara yang terpisah lama harus bekerja sama menyelesaikan warisan ayah mereka yang penuh rahasia.",views:9210,ratings:[5,4,4],comments:[{n:"Hendra",r:4,c:"Chemistry antar pemainnya kuat."}]},
+  {t:"Legenda Naga Selatan",g:"Aksi",y:2022,d:"130 mnt",syn:"Seorang pendekar muda memulai perjalanan untuk membalaskan dendam gurunya sambil menemukan takdir sejatinya.",views:28900,ratings:[5,5,4,5],comments:[{n:"Galih",r:5,c:"Sinematografinya indah, koreografi silatnya keren."}]},
+  {t:"Boneka di Loteng",g:"Horor",y:2024,d:"99 mnt",syn:"Sebuah boneka antik yang ditemukan di loteng membawa teror bagi keluarga yang baru saja pindah rumah.",views:20340,ratings:[3,3,4],comments:[{n:"Citra",r:3,c:"Cukup seram tapi ceritanya agak klise."}]},
+  {t:"Robot Kecil Berhati Besar",g:"Animasi",y:2021,d:"90 mnt",syn:"Robot pembersih kota yang rusak menemukan tujuan baru saat berteman dengan anak jalanan yang kesepian.",views:33210,ratings:[5,5,5,5],comments:[{n:"Intan",r:5,c:"Ceritanya menyentuh, animasinya halus banget."}]},
+  {t:"Jarak yang Tak Terucap",g:"Romansa",y:2023,d:"116 mnt",syn:"Sepasang sahabat pena yang tak pernah bertemu langsung akhirnya harus memilih antara realita dan surat-surat mereka.",views:12040,ratings:[4,5,5],comments:[{n:"Bella",r:5,c:"Konsepnya unik, endingnya bikin senyum-senyum sendiri."}]}
+];
+
+let currentCategory = "Semua";
+
+function renderCategoryPanel(){
+  const genres = ["Semua", ...new Set(movies.map(m=>m.g))];
+  const panel = document.getElementById('categoryPanel');
+  panel.innerHTML = genres.map(g =>
+    `<div class="chip ${g===currentCategory?'active':''}" onclick="setCategory('${g}')">${g}</div>`
+  ).join('');
+}
+function setCategory(g){
+  currentCategory = g;
+  renderCategoryPanel();
+  renderGrid();
+}
+
+function avgRating(m){
+  if(!m.ratings.length) return 0;
+  return (m.ratings.reduce((a,b)=>a+b,0)/m.ratings.length);
+}
+function starString(avg){
+  const rounded = Math.round(avg);
+  return "★".repeat(rounded) + "☆".repeat(5-rounded);
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid-section');
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const filtered = movies
+    .map((m,i)=>({...m, idx:i}))
+    .filter(m => (currentCategory==="Semua" || m.g===currentCategory) && m.t.toLowerCase().includes(q));
+
+  grid.innerHTML = filtered.map(m => `
+    <div class="card" onclick="openModal(${m.idx})">
+      <div class="poster" style="background:${genreColors[m.g]}">
+        <div>
+          <span class="genre-tag">${m.g}</span>
+          <div class="p-title">${m.t}</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-meta">
+          <span>${m.y} · ${m.d}</span>
+        </div>
+        <div class="card-meta">
+          <span class="stars">${starString(avgRating(m))}</span>
+          <span class="views mono">👁 ${m.views.toLocaleString('id-ID')}</span>
+        </div>
+      </div>
+    </div>
+  `).join('') || `<p style="color:var(--text-dim)">Tidak ada film yang cocok.</p>`;
+}
+
+/* ============ MODAL DETAIL ============ */
+let selectedStar = 0;
+
+function openModal(idx){
+  const m = movies[idx];
+  m.views += 1; // hitung view setiap kali dibuka
+  selectedStar = 0;
+
+  const commentsHtml = m.comments.map(c => `
+    <div class="comment-item">
+      <div class="c-head">
+        <span class="c-name">${c.n}</span>
+        <span class="c-stars">${"★".repeat(c.r)}${"☆".repeat(5-c.r)}</span>
+      </div>
+      <p>${c.c}</p>
+    </div>
+  `).join('') || `<p style="color:var(--text-dim); font-size:13px;">Belum ada komentar. Jadilah yang pertama.</p>`;
+
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-hero" style="background:${genreColors[m.g]}">
+      <button class="close-btn" onclick="closeModal()">✕</button>
+      <span class="genre-tag" style="display:inline-block; margin-bottom:8px;">${m.g}</span>
+      <h2>${m.t}</h2>
+      <div class="meta-line">${m.y} · ${m.d} · ${starString(avgRating(m))} (${avgRating(m).toFixed(1)}) · 👁 <span id="viewCount">${m.views.toLocaleString('id-ID')}</span> views</div>
+      <p class="synopsis">${m.syn}</p>
+    </div>
+    <div class="modal-section">
+      <h3>Beri Rating &amp; Komentar</h3>
+      <div class="rate-row">
+        <span style="font-size:12px; color:var(--text-dim);">Rating-mu:</span>
+        <div class="star-input" id="starInput">
+          ${[1,2,3,4,5].map(n=>`<span data-n="${n}" onclick="setStar(${n})">★</span>`).join('')}
+        </div>
+      </div>
+      <div class="comment-box">
+        <textarea id="commentInput" placeholder="Tulis komentarmu tentang film ini..."></textarea>
+        <button onclick="submitComment(${idx})">Kirim Ulasan</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h3>Komentar (${m.comments.length})</h3>
+      <div id="commentList">${commentsHtml}</div>
+    </div>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+  renderGrid(); // refresh view count di grid
+}
+
+function setStar(n){
+  selectedStar = n;
+  document.querySelectorAll('#starInput span').forEach(s=>{
+    s.classList.toggle('on', Number(s.dataset.n) <= n);
+  });
+}
+
+function submitComment(idx){
+  const text = document.getElementById('commentInput').value.trim();
+  if(!text){ alert('Tulis komentar dulu ya.'); return; }
+  if(selectedStar===0){ alert('Pilih rating bintang dulu ya.'); return; }
+  movies[idx].comments.unshift({ n: currentUser ? currentUser.nick : "Tamu", r: selectedStar, c: text });
+  movies[idx].ratings.push(selectedStar);
+  openModal(idx);
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+function closeModalOnOverlay(e){
+  if(e.target.id==='modalOverlay') closeModal();
+}
+</script>
+</body>
+</html>
